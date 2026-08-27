@@ -1,0 +1,10 @@
+yes set it up. but let me tell you how to. in the toastService.js define a function "setToastInstance" to set the toast inside. and this function will take in a toast instance as an argument. passing it down to the function. now that function just is called on app omunt inside the app.vue. and still inside the toastService.js wil have wrapper functions to cal the add method from the toastInstance. (successToast, infoToast, errorToast, warningToast, alertToast). e.g function export function successToast(summary = 'Success', message) {
+      if (!toastInstance) return noToastWarning()
+
+      toastInstance?.add({
+          severity: 'success',
+          summary: summary,
+          detail: message,
+          life: 3000,
+      })
+  } e.g const noToastWarning = () => console.warn('Toast instance not set. Please call setToastInstance() with a valid toast instance before using toast functions.'). and then each of these wrapper functions are exported and used across the application.
