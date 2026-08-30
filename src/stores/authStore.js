@@ -5,6 +5,10 @@ import http from '@/api/http.js'
 export const useAuthStore = defineStore('auth', () => {
   const accessToken = ref(null)
   const user = ref(null)
+  const isBooted = ref(false)
+
+  // shared across callers (router guard + App.vue) so a cold/hot reload only boots once
+  let bootPromise = null
 
   function setAccessToken(token) {
     accessToken.value = token
@@ -63,9 +67,29 @@ export const useAuthStore = defineStore('auth', () => {
     return data.data.message
   }
 
+  function bootAppRequest() {
+    if (bootPromise) return bootPromise
+
+    bootPromise = (async () => {
+      try {
+        await refreshTokenRequest()
+        await getMeRequest()
+      } catch {
+        // failed boot just means "not logged in" — not an error condition
+        clearAccessToken()
+        user.value = null
+      } finally {
+        isBooted.value = true
+      }
+    })()
+
+    return bootPromise
+  }
+
   return {
     accessToken,
     user,
+    isBooted,
     setAccessToken,
     clearAccessToken,
     registerRequest,
@@ -75,5 +99,6 @@ export const useAuthStore = defineStore('auth', () => {
     getMeRequest,
     requestPasswordResetCodeRequest,
     resetPasswordRequest,
+    bootAppRequest,
   }
 })

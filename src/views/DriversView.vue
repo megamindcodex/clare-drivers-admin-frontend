@@ -36,14 +36,14 @@ onMounted(getAll)
       <Column field="firstName" header="First Name" />
       <Column field="lastName" header="Last Name" />
       <Column field="email" header="Email" />
-      <Column field="phoneNumber" header="Phone Number" />
+      <!-- <Column field="phoneNumber" header="Phone Number" /> -->
       <Column field="status" header="Status">
         <template #body="{ data }">
           <Tag :value="data.status" :severity="statusSeverity(data.status)" />
         </template>
       </Column>
       <Column field="country" header="Country" />
-      <Column field="ninIdentification" header="NIN Number" />
+      <!-- <Column field="ninIdentification" header="NIN Number" /> -->
     </DataTable>
   </div>
 </template>

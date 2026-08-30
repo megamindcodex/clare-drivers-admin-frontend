@@ -61,7 +61,7 @@ export function useErrorHandler() {
         console.warn(`[API Error] ${error.code}: ${error.message}`)
         break
       case 'INVALID_RESET_CODE':
-        // TODO: handle
+        errorToast(error.message || 'That reset code is invalid or has expired.')
         console.warn(`[API Error] ${error.code}: ${error.message}`)
         break
       case 'INTERNAL_ERROR':

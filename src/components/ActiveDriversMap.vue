@@ -23,15 +23,18 @@ const DEFAULT_CENTER = [6.5244, 3.3792] // Lagos, Nigeria — fallback when no d
 const mapCenter = computed(() =>
   selectedActiveDriver.value
     ? [selectedActiveDriver.value.latitude, selectedActiveDriver.value.longitude]
-    : DEFAULT_CENTER,
+    : DEFAULT_CENTER
 )
 const mapZoom = computed(() => (selectedActiveDriver.value ? 14 : 6))
 </script>
 
 <template>
-  <div class="h-80 rounded-md overflow-hidden border border-surface-200">
+  <div class="h-1/3 rounded-md overflow-hidden border border-surface-200">
     <LMap :key="selectedActiveDriver?.driverId" :zoom="mapZoom" :center="mapCenter">
-      <LTileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="&copy; OpenStreetMap contributors" />
+      <LTileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution="&copy; OpenStreetMap contributors"
+      />
       <LMarker v-if="selectedActiveDriver" :lat-lng="mapCenter">
         <LPopup>
           <strong>{{ selectedActiveDriver.name }}</strong>

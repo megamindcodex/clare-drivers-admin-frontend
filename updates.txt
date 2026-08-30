@@ -1,0 +1,38 @@
+UPDATE PLANS
+============
+Running log of planned UI/feature changes to come back to later. Add a new
+entry any time a new idea comes up. Mark [x] when it's picked up / done,
+leave [ ] while still just a plan.
+
+--------------------------------------------------------------------------
+
+[ ] Active Drivers Map — marker-pin redesign
+
+Current behavior:
+- ActiveDriversView renders the map (ActiveDriversMap) on top and a
+  separate scrollable grid of all active drivers (ActiveDriversList)
+  below it.
+- Clicking a card in the list selects that driver, which re-centers/zooms
+  the map on them via `selectedActiveDriver` (driverStore).
+
+Planned change:
+- Stop rendering the driver grid/list entirely.
+- Instead, render every active driver as its own marker pin directly on
+  the map — one <LMarker> per driver in `activeDrivers`, not just the
+  currently selected one.
+- Clicking a marker pin selects that driver (reuse the existing selection
+  flow — `getActiveDriverDetailsRequest` / `selectedActiveDriver`, same
+  as the list's click handler does today).
+- Below the map, render a single driver detail panel showing the selected
+  driver's data (name, rating, vehicle type, plate number, phone, etc. —
+  the same fields currently shown per-card in the list), instead of a
+  list of every driver.
+- Before any marker is clicked, show an empty/placeholder state in the
+  detail panel (no driver selected yet).
+
+Why:
+- Avoids showing the same driver list twice (once as map pins, once as
+  cards) and makes the map itself the primary way to find and pick a
+  driver, instead of scrolling a separate side list.
+
+--------------------------------------------------------------------------

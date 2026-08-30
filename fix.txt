@@ -1,0 +1,57 @@
+CURRENT WORK: App boot / session-restore flow (hot & cold reload)
+
+GOAL
+On any page reload (not just "/"), restore the auth session from the httpOnly
+refresh cookie before deciding what to render, so a returning user doesn't get
+bounced to /login just because the in-memory accessToken was wiped by the reload.
+
+DESIGN (agreed with user)
+- authStore.bootAppRequest():
+    - runs refreshTokenRequest() then getMeRequest()
+    - swallows errors (failed boot = "not logged in", not a thrown error)
+    - sets isBooted.value = true when done (success or failure)
+    - memoizes its promise in a module/store-scoped `bootPromise` variable so
+      it only ever executes once per app load, even though it will be called
+      from two places that race on cold/hard reload:
+        1. router.beforeEach guard (needs auth state before first navigation)
+        2. App.vue onMounted (explicit trigger, per user's request)
+- Router (src/router/index.js):
+    - add /login and /register routes, both flagged public (meta.public = true
+      or a shared PUBLIC route-name list)
+    - beforeEach guard: await authStore.bootAppRequest(), then redirect
+      unauthenticated users away from protected routes to /login, and
+      authenticated users away from /login|/register to /
+- App.vue:
+    - while !isBooted: show a PrimeVue ProgressSpinner (NOT a skeleton —
+      skeletons are reserved for per-view/page data loading, not the global
+      app boot)
+    - once booted: conditionally render <SideBar /> (which nests <RouterView />
+      internally) for normal pages, OR render <RouterView /> directly
+      (unwrapped, no sidebar) when route is login/register
+    - calls bootAppRequest() in onMounted
+- src/views/LoginView.vue (new) — minimal email/password form, calls
+  loginRequest, redirect to "/" on success
+- src/views/RegisterView.vue (new) — minimal username/email/password form,
+  calls registerRequest, redirect to /login on success (register does not
+  return an accessToken — user must log in separately per API reference)
+- src/components/skeleton/ — created (empty, .gitkeep only). Holds future
+  per-page loading skeletons named Skeleton<ComponentName>.vue. NOT used for
+  the app-level boot spinner.
+
+STATUS: DONE
+- [x] src/components/skeleton/ folder created (.gitkeep)
+- [x] authStore.js: isBooted ref, bootPromise memoization, bootAppRequest() written and exported
+- [x] router/index.js: /login, /register routes (meta.public) + beforeEach guard
+- [x] src/views/LoginView.vue created
+- [x] src/views/RegisterView.vue created
+- [x] App.vue: ProgressSpinner while !isBooted, conditional SideBar (hidden on public
+      routes) vs bare RouterView, bootAppRequest() called in onMounted
+- [x] `npm run build` passes clean, no errors
+
+NOT DONE / OUT OF SCOPE FOR NOW
+- No route-level 404/catch-all
+- No "redirect back to originally intended route" after login (always lands on /overview)
+- Per-page/view loading skeletons (Skeleton<ComponentName>.vue in src/components/skeleton/)
+  are not built yet — that's separate follow-up work, not part of this boot flow
+- No forgot-password view wired up yet, even though authStore already has
+  requestPasswordResetCodeRequest / resetPasswordRequest
