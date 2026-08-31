@@ -1,6 +1,9 @@
 <script setup>
+import { computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
+import Avatar from 'primevue/avatar'
+import Card from 'primevue/card'
 import Button from 'primevue/button'
 import { useAuthStore } from '@/stores/authStore.js'
 import { useErrorHandler } from '@/composables/useErrorHandler.js'
@@ -9,6 +12,9 @@ const router = useRouter()
 const { user } = storeToRefs(useAuthStore())
 const { logoutRequest } = useAuthStore()
 const { handleError } = useErrorHandler()
+
+// initials avatar: first two characters of the username, no profile picture for admin accounts
+const initials = computed(() => user.value?.username?.slice(0, 2).toUpperCase() ?? '')
 
 async function handleLogout() {
   try {
@@ -21,22 +27,33 @@ async function handleLogout() {
 </script>
 
 <template>
-  <div class="p-4 flex flex-col gap-1">
-    <h1 class="text-xl font-bold">Profile</h1>
+  <div class="p-4">
+    <Card class="max-w-md mx-auto">
+      <template #content>
+        <div class="flex flex-col items-center gap-2 pb-4">
+          <Avatar :label="initials" shape="circle" size="xlarge" class="text-xl" />
+          <span class="text-lg font-bold">{{ user?.username }}</span>
+        </div>
 
-    <div class="min-w-0 flex flex-col mt-2">
-      <span class="text-[0.8rem] text-slate-600 font-bold">Username</span>
-      <span class="text-[0.85rem] font-semibold">{{ user?.username }}</span>
-    </div>
-    <div class="min-w-0 flex flex-col mt-2">
-      <span class="text-[0.8rem] text-slate-600 font-bold">Email</span>
-      <span class="text-[0.85rem] font-semibold">{{ user?.email }}</span>
-    </div>
-    <div class="min-w-0 flex flex-col mt-2">
-      <span class="text-[0.8rem] text-slate-600 font-bold">Role</span>
-      <span class="text-[0.85rem] font-semibold">{{ user?.role }}</span>
-    </div>
+        <div class="flex flex-col gap-3">
+          <div class="min-w-0 flex flex-col">
+            <span class="text-[0.8rem] text-slate-600 font-bold">Email</span>
+            <span class="text-[0.85rem] font-semibold">{{ user?.email }}</span>
+          </div>
+          <div class="min-w-0 flex flex-col">
+            <span class="text-[0.8rem] text-slate-600 font-bold">Role</span>
+            <span class="text-[0.85rem] font-semibold">{{ user?.role }}</span>
+          </div>
+        </div>
 
-    <Button label="Log out" severity="danger" class="mt-4 self-start" @click="handleLogout" />
+        <Button
+          label="Log out"
+          severity="danger"
+          outlined
+          class="w-full mt-6"
+          @click="handleLogout"
+        />
+      </template>
+    </Card>
   </div>
 </template>
