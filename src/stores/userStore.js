@@ -20,21 +20,29 @@ export const useUserStore = defineStore('user', () => {
     return data.data.user
   }
 
+  function patchUserInList(user) {
+    const index = users.value.findIndex((u) => u.userId === user.userId)
+    if (index !== -1) users.value[index] = user
+  }
+
   async function promoteUserRequest(userId) {
     const { data } = await http.patch(`/api/users/${userId}/promote`)
     selectedUser.value = data.data.user
+    patchUserInList(data.data.user)
     return data.data.user
   }
 
   async function suspendUserRequest(userId) {
     const { data } = await http.patch(`/api/users/${userId}/suspend`)
     selectedUser.value = data.data.user
+    patchUserInList(data.data.user)
     return data.data.user
   }
 
   async function banUserRequest(userId) {
     const { data } = await http.patch(`/api/users/${userId}/ban`)
     selectedUser.value = data.data.user
+    patchUserInList(data.data.user)
     return data.data.user
   }
 

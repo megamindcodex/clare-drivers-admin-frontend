@@ -38,6 +38,7 @@ const router = createRouter({
       path: '/admins',
       name: 'admins',
       component: () => import('@/views/AdminsView.vue'),
+      meta: { roles: ['SuperAdmin'] },
     },
     {
       path: '/drivers',
@@ -59,12 +60,22 @@ const router = createRouter({
       name: 'driver-detail',
       component: () => import('@/views/DriverDetailView.vue'),
     },
+    {
+      path: '/logs',
+      name: 'activity-logs',
+      component: () => import('@/views/ActivityLogsView.vue'),
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('@/views/ProfileView.vue'),
+    },
   ],
 })
 
 router.beforeEach(async (to) => {
   const authStore = useAuthStore()
-  const { accessToken } = storeToRefs(authStore)
+  const { accessToken, user } = storeToRefs(authStore)
   const { bootAppRequest } = authStore
 
   await bootAppRequest()
@@ -74,6 +85,10 @@ router.beforeEach(async (to) => {
 
   if (!isAuthenticated && !isPublic) return { name: 'login' }
   if (isAuthenticated && isPublic) return { name: 'overview' }
+
+  if (isAuthenticated && to.meta.roles && !to.meta.roles.includes(user.value?.role)) {
+    return { name: 'overview' }
+  }
 })
 
 export default router

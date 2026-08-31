@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
+import { useRouter } from 'vue-router'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Avatar from 'primevue/avatar'
@@ -8,6 +9,7 @@ import Tag from 'primevue/tag'
 import { useDriverStore } from '@/stores/driverStore.js'
 import { useErrorHandler } from '@/composables/useErrorHandler.js'
 
+const router = useRouter()
 const { drivers } = storeToRefs(useDriverStore())
 const { getAllDriversRequest } = useDriverStore()
 const { handleError } = useErrorHandler()
@@ -22,12 +24,26 @@ async function getAll() {
   }
 }
 
+function goToDriverDetail({ data }) {
+  router.push({ name: 'driver-detail', params: { driverId: data.driverId } })
+}
+
+const rowClass = () => 'cursor-pointer'
+
 onMounted(getAll)
 </script>
 
 <template>
   <div class="p-4">
-    <DataTable :value="drivers" data-key="driverId" paginator :rows="10" striped-rows>
+    <DataTable
+      :value="drivers"
+      data-key="driverId"
+      paginator
+      :rows="10"
+      striped-rows
+      :row-class="rowClass"
+      @row-click="goToDriverDetail"
+    >
       <Column header="Profile Pic">
         <template #body="{ data }">
           <Avatar :image="data.profilePicUrl" shape="circle" />

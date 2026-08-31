@@ -33,6 +33,19 @@ export const useDriverStore = defineStore('driver', () => {
     return data.data.driver
   }
 
+  async function getDriverFullDataRequest(driverId) {
+    const { data } = await http.get(`/api/drivers/${driverId}/full-data`)
+    selectedDriver.value = data.data.driver
+    return data.data.driver
+  }
+
+  // pure toggle on the backend — no body, flips isVerified to the opposite of its current value
+  async function toggleIsVerifiedRequest(driverId) {
+    const { data } = await http.patch(`/api/drivers/${driverId}/isVerified`)
+    if (selectedDriver.value) selectedDriver.value.isVerified = data.data.isVerified
+    return data.data.isVerified
+  }
+
   async function getDriverDocumentsRequest(driverId) {
     const { data } = await http.get(`/api/drivers/${driverId}/documents`)
     selectedDriverDocuments.value = data.data.document
@@ -53,6 +66,8 @@ export const useDriverStore = defineStore('driver', () => {
     selectedActiveDriver,
     getAllDriversRequest,
     getDriverDetailsRequest,
+    getDriverFullDataRequest,
+    toggleIsVerifiedRequest,
     getDriverDocumentsRequest,
     updateDriverApprovalRequest,
     getActiveDriversRequest,
