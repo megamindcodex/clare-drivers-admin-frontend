@@ -51,7 +51,11 @@ const currentPageName = computed(
         <SidebarAside class="!hidden md:!flex">
           <SidebarPanel>
             <SidebarHeader>
-              <span class="text-lg font-semibold">Clare Drivers Admin</span>
+              <span class="text-lg font-bold">
+                <span style="color: var(--p-primary-color)">CLARE</span>
+                <span style="color: var(--p-surface-900)">DRIVERS</span>
+                admin
+              </span>
             </SidebarHeader>
 
             <SidebarContent>
@@ -65,10 +69,20 @@ const currentPageName = computed(
         <Toolbar>
           <template #start>
             <div class="flex flex-col">
-              <span class="text-lg font-semibold md:hidden">Clare Drivers Admin</span>
+              <span class="text-lg font-bold md:hidden">
+                <span style="color: var(--p-primary-color)">CLARE</span>
+                <span style="color: var(--p-surface-900)">DRIVERS</span>
+                admin
+              </span>
               <span class="hidden md:inline text-lg font-semibold">{{ currentPageName }}</span>
               <div class="md:hidden flex gap-0.5 items-center">
-                <Button text aria-label="Back" class="mt-0.5" @click="router.back()">
+                <Button
+                  text
+                  aria-label="Back"
+                  class="mt-0.5"
+                  @click="router.back()"
+                  v-if="currentPageName !== 'Overview'"
+                >
                   <IconChevronLeft />
                 </Button>
                 <span class="text-sm font-semibold">{{ currentPageName }}</span>
@@ -89,7 +103,7 @@ const currentPageName = computed(
               class="md:hidden!"
               @click="emit('toggle-drawer')"
             >
-              <IconMenu />
+              <IconMenu :size="30" />
             </Button>
           </template>
         </Toolbar>

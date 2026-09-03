@@ -36,3 +36,21 @@ Why:
   driver, instead of scrolling a separate side list.
 
 --------------------------------------------------------------------------
+
+[ ] Reset password — cooldown on the resend-code button
+
+Current behavior:
+- ResetPasswordForm's InputGroupAddon button (requestResetCodeHandler)
+  is only disabled while the request is in flight (isRequestingCode).
+  Once it resolves, the button is immediately clickable again.
+
+Planned change:
+- Add a wait/cooldown timer after a successful resend. While the cooldown
+  is active, keep the button disabled (in addition to the existing
+  in-flight disable) to prevent the user from spamming the resend
+  request.
+
+Why:
+- Prevents over-requesting password reset codes in quick succession.
+
+--------------------------------------------------------------------------

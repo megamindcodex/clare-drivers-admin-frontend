@@ -1,11 +1,14 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Avatar from 'primevue/avatar'
 import Tag from 'primevue/tag'
+import Button from 'primevue/button'
+import SkeletonDrivers from '@/components/skeletons/skeleton-drivers.vue'
+import { IconReload } from '@/components/icons'
 import { useDriverStore } from '@/stores/driverStore.js'
 import { useErrorHandler } from '@/composables/useErrorHandler.js'
 
@@ -14,13 +17,23 @@ const { drivers } = storeToRefs(useDriverStore())
 const { getAllDriversRequest } = useDriverStore()
 const { handleError } = useErrorHandler()
 
-const statusSeverity = (status) => (status === 'active' ? 'success' : 'danger')
+const isLoading = ref(false)
+
+const approvalSeverity = (isApproved) => {
+  if (isApproved === 'Approved') return 'success'
+  if (isApproved === 'Pending') return 'warn'
+  if (isApproved === 'Rejected') return 'danger'
+  return 'secondary'
+}
 
 async function getAll() {
   try {
+    isLoading.value = true
     await getAllDriversRequest()
   } catch (error) {
     handleError(error)
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -34,12 +47,30 @@ onMounted(getAll)
 </script>
 
 <template>
-  <div class="p-4">
+  <div class="p-4 flex flex-col gap-4">
+    <div class="flex justify-end">
+      <Button
+        label="Refresh"
+        size="small"
+        text
+        severity="contrast"
+        :loading="isLoading"
+        @click="getAll"
+      >
+        <template #icon>
+          <IconReload :size="16" />
+        </template>
+      </Button>
+    </div>
+
+    <SkeletonDrivers v-if="isLoading" />
+
     <DataTable
+      v-else
       :value="drivers"
       data-key="driverId"
       paginator
-      :rows="10"
+      :rows="13"
       striped-rows
       :row-class="rowClass"
       @row-click="goToDriverDetail"
@@ -51,15 +82,20 @@ onMounted(getAll)
       </Column>
       <Column field="firstName" header="First Name" />
       <Column field="lastName" header="Last Name" />
-      <Column field="email" header="Email" />
-      <!-- <Column field="phoneNumber" header="Phone Number" /> -->
-      <Column field="status" header="Status">
+      <Column field="country" header="Country" />
+      <Column header="Verified">
         <template #body="{ data }">
-          <Tag :value="data.status" :severity="statusSeverity(data.status)" />
+          <Tag
+            :value="data.isVerified ? 'Verified' : 'unverified'"
+            :severity="data.isVerified ? 'info' : 'secondary'"
+          />
         </template>
       </Column>
-      <Column field="country" header="Country" />
-      <!-- <Column field="ninIdentification" header="NIN Number" /> -->
+      <Column header="Approval">
+        <template #body="{ data }">
+          <Tag :value="data.isApproved" :severity="approvalSeverity(data.isApproved)" />
+        </template>
+      </Column>
     </DataTable>
   </div>
 </template>

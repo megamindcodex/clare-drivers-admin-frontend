@@ -6,12 +6,32 @@ import Avatar from 'primevue/avatar'
 import Tag from 'primevue/tag'
 import Card from 'primevue/card'
 import ToggleSwitch from 'primevue/toggleswitch'
+import RadioButton from 'primevue/radiobutton'
+import ProgressSpinner from 'primevue/progressspinner'
+import Button from 'primevue/button'
+import Gallery from 'primevue/gallery'
+import GalleryHeader from 'primevue/galleryheader'
+import GalleryContent from 'primevue/gallerycontent'
+import GalleryItem from 'primevue/galleryitem'
+import GalleryPrev from 'primevue/galleryprev'
+import GalleryNext from 'primevue/gallerynext'
+import GalleryZoomIn from 'primevue/galleryzoomin'
+import GalleryZoomOut from 'primevue/galleryzoomout'
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconZoomIn,
+  IconZoomOut,
+  IconReload,
+} from '@/components/icons'
+import SkeletonDriverDetail from '@/components/skeletons/skeleton-driver-detail.vue'
 import { useDriverStore } from '@/stores/driverStore.js'
 import { useErrorHandler } from '@/composables/useErrorHandler.js'
 
 const route = useRoute()
 const { selectedDriver } = storeToRefs(useDriverStore())
-const { getDriverFullDataRequest, toggleIsVerifiedRequest } = useDriverStore()
+const { getDriverFullDataRequest, toggleIsVerifiedRequest, updateDriverApprovalRequest } =
+  useDriverStore()
 const { handleError } = useErrorHandler()
 
 // v-model on the ToggleSwitch below is bound to this computed, not to `selectedDriver.isVerified`
@@ -26,8 +46,20 @@ const isVerifiedModel = computed({
   set: () => toggleIsVerified(),
 })
 
+// Same "getter only reflects state, setter reacts to the click" pattern as isVerifiedModel above.
+// Get returns null while isApproved is 'Pending' or 'False', so neither RadioButton is checked;
+// it returns 'Approved'/'Rejected' once the driver is in one of those states, checking that one.
+const approvalModel = computed({
+  get: () => {
+    const isApproved = selectedDriver.value?.isApproved
+    return isApproved === 'Approved' || isApproved === 'Rejected' ? isApproved : null
+  },
+  set: (value) => updateApproval(value),
+})
+
+const isLoading = ref(false)
 const isVerifiedToggling = ref(false)
-const statusSeverity = (status) => (status === 'active' ? 'success' : 'danger')
+const statusSeverity = (status) => (status === 'active' ? 'success' : 'secondary')
 
 const approvalSeverity = (isApproved) => {
   if (isApproved === 'Approved') return 'success'
@@ -38,11 +70,30 @@ const approvalSeverity = (isApproved) => {
 
 const formatDate = (value) => (value ? new Date(value).toLocaleDateString() : '—')
 
+// Maps each possible vehicle image field on the driver to a display label for the gallery.
+const vehicleImageFields = [
+  { key: 'frontViewUrl', label: 'Front View' },
+  { key: 'backViewUrl', label: 'Back View' },
+  { key: 'sideViewUrl', label: 'Side View' },
+  { key: 'insideViewUrl', label: 'Inside View' },
+  { key: 'plateNumberUrl', label: 'Plate Number' },
+]
+
+// Only the fields the driver actually has a URL for, resolved into gallery-ready items.
+const vehicleImages = computed(() =>
+  vehicleImageFields
+    .filter(({ key }) => selectedDriver.value?.[key])
+    .map(({ key, label }) => ({ key, label, url: selectedDriver.value[key] }))
+)
+
 async function getDriverFullData() {
   try {
+    isLoading.value = true
     await getDriverFullDataRequest(route.params.driverId)
   } catch (error) {
     handleError(error)
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -57,11 +108,42 @@ async function toggleIsVerified() {
   }
 }
 
+const isApprovalUpdating = ref(false)
+
+async function updateApproval(isApproved) {
+  try {
+    isApprovalUpdating.value = true
+    await updateDriverApprovalRequest(route.params.driverId, { isApproved })
+  } catch (error) {
+    handleError(error)
+  } finally {
+    isApprovalUpdating.value = false
+  }
+}
+
 onMounted(getDriverFullData)
 </script>
 
 <template>
-  <div class="p-4 flex flex-col gap-4" v-if="selectedDriver">
+  <div class="p-4 flex flex-col gap-4">
+    <div class="flex justify-end">
+      <Button
+        label="Refresh"
+        size="small"
+        text
+        severity="contrast"
+        :loading="isLoading"
+        @click="getDriverFullData"
+      >
+        <template #icon>
+          <IconReload :size="16" />
+        </template>
+      </Button>
+    </div>
+
+    <SkeletonDriverDetail v-if="isLoading" />
+
+    <div v-else-if="selectedDriver" class="flex flex-col gap-4">
     <div class="flex flex-wrap items-center gap-4">
       <Avatar :image="selectedDriver.profilePicUrl" shape="circle" size="xlarge" />
 
@@ -92,6 +174,37 @@ onMounted(getDriverFullData)
           }}</span>
           <ToggleSwitch v-model="isVerifiedModel" />
         </div>
+
+        <div
+          class="flex flex-wrap items-center justify-between pt-4 mt-4 border-t border-slate-200"
+        >
+          <span class="font-semibold">Approval</span>
+          <ProgressSpinner v-if="isApprovalUpdating" style="width: 20px; height: 20px" />
+
+          <div class="flex items-center gap-4">
+            <div class="flex items-center gap-2">
+              <RadioButton
+                v-model="approvalModel"
+                inputId="approval-approved"
+                name="approval"
+                value="Approved"
+                :disabled="isApprovalUpdating"
+              />
+              <label for="approval-approved">Approve</label>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <RadioButton
+                v-model="approvalModel"
+                inputId="approval-rejected"
+                name="approval"
+                value="Rejected"
+                :disabled="isApprovalUpdating"
+              />
+              <label for="approval-rejected">Reject</label>
+            </div>
+          </div>
+        </div>
       </template>
     </Card>
 
@@ -120,7 +233,31 @@ onMounted(getDriverFullData)
     <Card>
       <template #title>Vehicle</template>
       <template #content>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div v-if="vehicleImages.length" class="h-80 mb-4 pb-4 border-b border-slate-200">
+          <Gallery class="h-full rounded-md overflow-hidden border border-slate-200">
+            <GalleryHeader class="justify-end gap-2">
+              <GalleryZoomOut as="button">
+                <IconZoomOut style="width: 24px; height: 24px" />
+              </GalleryZoomOut>
+              <GalleryZoomIn as="button">
+                <IconZoomIn style="width: 24px; height: 24px" />
+              </GalleryZoomIn>
+            </GalleryHeader>
+            <GalleryContent>
+              <GalleryPrev as="button">
+                <IconChevronLeft :size="24" />
+              </GalleryPrev>
+              <GalleryNext as="button">
+                <IconChevronRight :size="24" />
+              </GalleryNext>
+              <GalleryItem v-for="image in vehicleImages" :key="image.key">
+                <img :src="image.url" :alt="image.label" />
+              </GalleryItem>
+            </GalleryContent>
+          </Gallery>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div class="min-w-0 flex flex-col">
             <span class="text-[0.8rem] text-slate-600 font-bold">Vehicle Type</span>
             <span class="truncate text-[0.85rem] font-semibold">{{
@@ -174,7 +311,7 @@ onMounted(getDriverFullData)
     <Card>
       <template #title>Identification</template>
       <template #content>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div class="min-w-0 flex flex-col">
             <span class="text-[0.8rem] text-slate-600 font-bold">Driving License</span>
             <span class="truncate text-[0.85rem] font-semibold">{{
@@ -198,7 +335,7 @@ onMounted(getDriverFullData)
     <Card>
       <template #title>Record</template>
       <template #content>
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div class="min-w-0 flex flex-col">
             <span class="text-[0.8rem] text-slate-600 font-bold">Created</span>
             <span class="truncate text-[0.85rem] font-semibold">{{
@@ -214,5 +351,6 @@ onMounted(getDriverFullData)
         </div>
       </template>
     </Card>
+    </div>
   </div>
 </template>

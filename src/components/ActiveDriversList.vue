@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import ScrollArea from 'primevue/scrollarea'
 import ScrollAreaViewport from 'primevue/scrollareaviewport'
@@ -7,6 +7,9 @@ import ScrollAreaContent from 'primevue/scrollareacontent'
 import ScrollAreaScrollbar from 'primevue/scrollareascrollbar'
 import ScrollAreaHandle from 'primevue/scrollareahandle'
 import Tag from 'primevue/tag'
+import Button from 'primevue/button'
+import SkeletonActiveDrivers from '@/components/skeletons/skeleton-active-drivers.vue'
+import { IconReload } from '@/components/icons'
 import { useDriverStore } from '@/stores/driverStore.js'
 import { useErrorHandler } from '@/composables/useErrorHandler.js'
 
@@ -14,12 +17,17 @@ const { activeDrivers, selectedActiveDriver } = storeToRefs(useDriverStore())
 const { getActiveDriversRequest, getActiveDriverDetailsRequest } = useDriverStore()
 const { handleError } = useErrorHandler()
 
+const isLoading = ref(false)
+
 async function handleFetchActiveDrivers() {
   try {
+    isLoading.value = true
     await getActiveDriversRequest()
     console.log('Active drivers fetched successfully: ', activeDrivers.value)
   } catch (error) {
     handleError(error)
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -36,8 +44,25 @@ async function selectDriver(item) {
 </script>
 
 <template>
-  <div class="flex flex-col min-h-0">
-    <ScrollArea class="flex-1 min-h-0" variant="always">
+  <div class="flex flex-col min-h-0 gap-2">
+    <div class="flex justify-end">
+      <Button
+        label="Refresh"
+        size="small"
+        text
+        severity="contrast"
+        :loading="isLoading"
+        @click="handleFetchActiveDrivers"
+      >
+        <template #icon>
+          <IconReload :size="16" />
+        </template>
+      </Button>
+    </div>
+
+    <SkeletonActiveDrivers v-if="isLoading" />
+
+    <ScrollArea v-else class="flex-1 min-h-0" variant="always">
       <ScrollAreaViewport>
         <ScrollAreaContent>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">

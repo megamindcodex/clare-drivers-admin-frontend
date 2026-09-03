@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useToast } from 'primevue/usetoast'
 import Toast from 'primevue/toast'
+import ConfirmDialog from 'primevue/confirmdialog'
 import ProgressSpinner from 'primevue/progressspinner'
 import Drawer from 'primevue/drawer'
 import SideBar from '@/components/SideBar.vue'
@@ -30,6 +31,7 @@ onMounted(() => {
 
 <template>
   <Toast />
+  <ConfirmDialog />
   <div class="w-full">
     <div v-if="!isBooted" class="flex items-center justify-center h-screen">
       <ProgressSpinner />

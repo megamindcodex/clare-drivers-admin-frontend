@@ -5,11 +5,14 @@ import InputText from 'primevue/inputtext'
 import InputPassword from 'primevue/inputpassword'
 import IconField from 'primevue/iconfield'
 import InputIcon from 'primevue/inputicon'
+import InputGroup from 'primevue/inputgroup'
+import InputGroupAddon from 'primevue/inputgroupaddon'
+import ProgressSpinner from 'primevue/progressspinner'
 import FloatLabel from 'primevue/floatlabel'
 import Button from 'primevue/button'
 import Label from 'primevue/label'
 import Message from 'primevue/message'
-import { IconEye, IconEyeSlash } from '@/components/icons'
+import { IconEye, IconEyeSlash, IconReload } from '@/components/icons'
 import { useAuthStore } from '@/stores/authStore.js'
 import { useFieldValidation } from '@/composables/useFieldValidation.js'
 import { emailSchema, resetCodeSchema, passwordSchema } from '@/schemas/authSchemas.js'
@@ -17,7 +20,7 @@ import { successToast } from '@/utils/toastService.js'
 
 const router = useRouter()
 const route = useRoute()
-const { resetPasswordRequest } = useAuthStore()
+const { resetPasswordRequest, requestPasswordResetCodeRequest } = useAuthStore()
 const { fieldErrors, fieldValidity, validateField, validateForm } = useFieldValidation()
 
 const email = ref(route.query.email ?? '')
@@ -25,6 +28,7 @@ const resetCode = ref('')
 const newPassword = ref('')
 const isPasswordMasked = ref(true)
 const isSubmitting = ref(false)
+const isRequestingCode = ref(false)
 const formError = ref('')
 
 const isFormValid = computed(
@@ -58,6 +62,19 @@ async function onSubmit() {
     isSubmitting.value = false
   }
 }
+
+async function requestResetCodeHandler() {
+  formError.value = ''
+  isRequestingCode.value = true
+  try {
+    const message = await requestPasswordResetCodeRequest({ email: route.query.email })
+    successToast('Check your email', message)
+  } catch (error) {
+    formError.value = error.message || 'Unable to send reset code. Please try again.'
+  } finally {
+    isRequestingCode.value = false
+  }
+}
 </script>
 
 <template>
@@ -85,20 +102,36 @@ async function onSubmit() {
     </div>
 
     <div class="flex flex-col gap-1">
-      <FloatLabel variant="in">
-        <InputText
-          id="resetCode"
-          v-model="resetCode"
-          autocomplete="one-time-code"
-          maxlength="6"
-          fluid
-          required
-          :invalid="!!fieldErrors.resetCode"
-          @blur="validateField('resetCode', resetCodeSchema, resetCode)"
-          @keyup.enter="onSubmit"
-        />
-        <Label for="resetCode">Reset code</Label>
-      </FloatLabel>
+      <InputGroup>
+        <FloatLabel variant="in">
+          <InputText
+            id="resetCode"
+            v-model="resetCode"
+            autocomplete="one-time-code"
+            maxlength="6"
+            fluid
+            required
+            :invalid="!!fieldErrors.resetCode"
+            @blur="validateField('resetCode', resetCodeSchema, resetCode)"
+            @keyup.enter="onSubmit"
+          />
+          <Label for="resetCode">Reset code</Label>
+        </FloatLabel>
+        <InputGroupAddon>
+          <Button
+            type="button"
+            severity="secondary"
+            variant="text"
+            :disabled="isRequestingCode"
+            @click="requestResetCodeHandler"
+          >
+            <template #icon>
+              <ProgressSpinner v-if="isRequestingCode" style="width: 16px; height: 16px" stroke-width="6" />
+              <IconReload v-else :size="16" />
+            </template>
+          </Button>
+        </InputGroupAddon>
+      </InputGroup>
       <Message v-if="fieldErrors.resetCode" severity="error" size="small" variant="simple">
         {{ fieldErrors.resetCode }}
       </Message>

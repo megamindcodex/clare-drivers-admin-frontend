@@ -52,9 +52,11 @@ export const useDriverStore = defineStore('driver', () => {
     return data.data.document
   }
 
+  // merges into the existing driver rather than replacing it — the approve endpoint's
+  // response omits fields (e.g. vehicle image URLs) that full-data already loaded
   async function updateDriverApprovalRequest(driverId, { isApproved }) {
     const { data } = await http.patch(`/api/drivers/${driverId}/approve`, { isApproved })
-    selectedDriver.value = data.data.driver
+    selectedDriver.value = { ...selectedDriver.value, ...data.data.driver }
     return data.data.driver
   }
 

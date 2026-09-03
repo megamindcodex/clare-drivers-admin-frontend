@@ -4,6 +4,8 @@ import { storeToRefs } from 'pinia'
 import DataView from 'primevue/dataview'
 import Tag from 'primevue/tag'
 import Button from 'primevue/button'
+import SkeletonAdmins from '@/components/skeletons/skeleton-admins.vue'
+import { IconReload } from '@/components/icons'
 import { useUserStore } from '@/stores/userStore.js'
 import { useErrorHandler } from '@/composables/useErrorHandler.js'
 import { successToast } from '@/utils/toastService.js'
@@ -14,6 +16,7 @@ const { handleError } = useErrorHandler()
 
 const pendingUserId = ref(null)
 const pendingAction = ref(null)
+const isLoading = ref(false)
 
 const roleSeverity = (role) => (role === 'Admin' ? 'info' : 'secondary')
 
@@ -25,9 +28,12 @@ const statusSeverity = (status) => {
 
 async function fetchUsers() {
   try {
+    isLoading.value = true
     await getUsersRequest()
   } catch (error) {
     handleError(error)
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -77,8 +83,25 @@ onMounted(fetchUsers)
 </script>
 
 <template>
-  <div class="p-4">
-    <DataView :value="users" data-key="userId">
+  <div class="p-4 flex flex-col gap-4">
+    <div class="flex justify-end">
+      <Button
+        label="Refresh"
+        size="small"
+        text
+        severity="contrast"
+        :loading="isLoading"
+        @click="fetchUsers"
+      >
+        <template #icon>
+          <IconReload :size="16" />
+        </template>
+      </Button>
+    </div>
+
+    <SkeletonAdmins v-if="isLoading" />
+
+    <DataView v-else :value="users" data-key="userId">
       <template #list="{ items }">
         <div class="flex flex-col gap-3">
           <div
