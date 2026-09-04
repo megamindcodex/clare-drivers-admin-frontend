@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import Avatar from 'primevue/avatar'
@@ -16,12 +16,17 @@ const { handleError } = useErrorHandler()
 // initials avatar: first two characters of the username, no profile picture for admin accounts
 const initials = computed(() => user.value?.username?.slice(0, 2).toUpperCase() ?? '')
 
+const isLoggingOut = ref(false)
+
 async function handleLogout() {
   try {
+    isLoggingOut.value = true
     await logoutRequest()
     router.push({ name: 'login' })
   } catch (error) {
     handleError(error)
+  } finally {
+    isLoggingOut.value = false
   }
 }
 </script>
@@ -51,6 +56,7 @@ async function handleLogout() {
           severity="danger"
           outlined
           class="w-full mt-6"
+          :loading="isLoggingOut"
           @click="handleLogout"
         />
       </template>

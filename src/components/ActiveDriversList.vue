@@ -9,6 +9,7 @@ import ScrollAreaHandle from 'primevue/scrollareahandle'
 import Tag from 'primevue/tag'
 import Button from 'primevue/button'
 import SkeletonActiveDrivers from '@/components/skeletons/skeleton-active-drivers.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { IconReload } from '@/components/icons'
 import { useDriverStore } from '@/stores/driverStore.js'
 import { useErrorHandler } from '@/composables/useErrorHandler.js'
@@ -61,6 +62,8 @@ async function selectDriver(item) {
     </div>
 
     <SkeletonActiveDrivers v-if="isLoading" />
+
+    <EmptyState v-else-if="activeDrivers.length === 0" message="No active drivers right now." />
 
     <ScrollArea v-else class="flex-1 min-h-0" variant="always">
       <ScrollAreaViewport>

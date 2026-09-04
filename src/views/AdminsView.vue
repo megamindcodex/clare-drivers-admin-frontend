@@ -5,6 +5,7 @@ import DataView from 'primevue/dataview'
 import Tag from 'primevue/tag'
 import Button from 'primevue/button'
 import SkeletonAdmins from '@/components/skeletons/skeleton-admins.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { IconReload } from '@/components/icons'
 import { useUserStore } from '@/stores/userStore.js'
 import { useErrorHandler } from '@/composables/useErrorHandler.js'
@@ -155,7 +156,7 @@ onMounted(fetchUsers)
       </template>
 
       <template #empty>
-        <p class="text-center text-surface-500 py-8">No admins yet.</p>
+        <EmptyState message="No admins yet." />
       </template>
     </DataView>
   </div>

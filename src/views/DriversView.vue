@@ -8,6 +8,7 @@ import Avatar from 'primevue/avatar'
 import Tag from 'primevue/tag'
 import Button from 'primevue/button'
 import SkeletonDrivers from '@/components/skeletons/skeleton-drivers.vue'
+import EmptyState from '@/components/EmptyState.vue'
 import { IconReload } from '@/components/icons'
 import { useDriverStore } from '@/stores/driverStore.js'
 import { useErrorHandler } from '@/composables/useErrorHandler.js'
@@ -96,6 +97,10 @@ onMounted(getAll)
           <Tag :value="data.isApproved" :severity="approvalSeverity(data.isApproved)" />
         </template>
       </Column>
+
+      <template #empty>
+        <EmptyState message="No drivers yet." />
+      </template>
     </DataTable>
   </div>
 </template>
